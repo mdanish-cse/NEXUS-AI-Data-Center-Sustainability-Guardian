@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/db/repository";
+import { resolveScenario } from "@/lib/db/resolveScenario";
 import { runSimulation } from "@/lib/nexus/simulator";
 import type { SimulationParams } from "@/lib/nexus/types";
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
-}
+import { ValidationError, errorMessage } from "@/lib/http/errors";
 
 const NUMERIC_FIELDS: (keyof SimulationParams)[] = [
   "coolingSetpointDeltaC",
   "itWorkloadDeltaPercent",
   "ambientTemperatureDeltaC",
 ];
-
-class ValidationError extends Error {}
 
 function parseSimulationParams(body: unknown): SimulationParams {
   if (typeof body !== "object" || body === null) {
@@ -31,14 +27,27 @@ function parseSimulationParams(body: unknown): SimulationParams {
   return params;
 }
 
-/** POST /api/simulate — body: SimulationParams (all fields optional). Returns SimulationResult, including the safety verdict. Persists the run. */
+function parseScenarioOverride(body: unknown): string | null {
+  if (typeof body !== "object" || body === null) return null;
+  const value = (body as Record<string, unknown>).scenario;
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw new ValidationError('"scenario" must be a string if provided.');
+  return value;
+}
+
+/**
+ * POST /api/simulate — body: SimulationParams (all fields optional) plus an
+ * optional "scenario" override (see resolveScenario.ts). Returns
+ * SimulationResult, including the safety verdict. Persists the run.
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const params = parseSimulationParams(body);
+    const scenarioOverride = parseScenarioOverride(body);
 
     const repository = getRepository();
-    const scenario = await repository.getScenario();
+    const scenario = await resolveScenario(repository, scenarioOverride);
     const result = runSimulation(scenario.current, params);
     await repository.saveSimulation(result);
 

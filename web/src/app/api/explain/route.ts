@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { getAIProvider } from "@/lib/ai/provider";
 import type { ExplanationPromptInput } from "@/lib/ai/prompt";
 import type { Finding, SimulationResult } from "@/lib/nexus/types";
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
-}
-
-class ValidationError extends Error {}
+import { ValidationError, errorMessage } from "@/lib/http/errors";
 
 function parseInput(body: unknown): ExplanationPromptInput {
   if (typeof body !== "object" || body === null || !("kind" in body)) {
