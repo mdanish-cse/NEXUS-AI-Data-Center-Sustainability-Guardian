@@ -44,4 +44,12 @@ describe("detectAnomalies", () => {
     const { cooling } = coolingFinding("unsafe-optimization");
     expect(cooling).toBeUndefined();
   });
+
+  it("flags the critical facility stress scenario across cooling, water, and thermal metrics", () => {
+    const scenario = buildScenario("critical-facility-stress", NOW);
+    const findings = detectAnomalies(scenario.current);
+    expect(scenario.current.serverTemperatureC).toBeGreaterThan(32);
+    expect(findings.map((finding) => finding.metric)).toEqual(expect.arrayContaining(["cooling_power", "water_usage", "server_temperature"]));
+    expect(findings.every((finding) => finding.severity === "high")).toBe(true);
+  });
 });

@@ -28,6 +28,8 @@ interface Profile {
   ambientTemperatureC: number;
   /** Target (actual vs expected) cooling-power deviation, as a percent. 0 = perfectly matched. */
   coolingDeviationPercent: number;
+  /** Optional observed server temperature for a synthetic equipment-fault scenario. */
+  serverTemperatureC?: number;
 }
 
 const NORMAL_PROFILE: Profile = { itLoadPercent: 62, ambientTemperatureC: 26, coolingDeviationPercent: 0 };
@@ -59,6 +61,12 @@ const SCENARIO_PROFILES: Record<ScenarioId, { label: string; description: string
       "High-load baseline for the What-if Simulator demo: cooling is already matched to requirement, so a meaningful cooling-setpoint increase pushes predicted server temperature past the safety threshold and gets rejected.",
     profile: { itLoadPercent: 88, ambientTemperatureC: 28, coolingDeviationPercent: 0 },
   },
+  "critical-facility-stress": {
+    label: "Critical facility stress",
+    description:
+      "Synthetic chiller-delivery fault: cooling equipment draws excess energy and water while server temperatures remain unsafe, demonstrating a critical reliability and sustainability incident.",
+    profile: { itLoadPercent: 86, ambientTemperatureC: 34, coolingDeviationPercent: 55, serverTemperatureC: 35 },
+  },
 };
 
 function lerp(a: number, b: number, t: number): number {
@@ -76,7 +84,11 @@ function buildTelemetry(
   const itPowerMw = (CAPACITY_MW * itLoadPercent) / 100;
   const expectedCooling = expectedCoolingPowerMw(itPowerMw, ambientTemperatureC);
   const coolingPowerMw = expectedCooling * (1 + coolingDeviationPercent / 100);
-  const serverTemperatureC = predictServerTemperatureC(coolingPowerMw, expectedCooling);
+  const modeledServerTemperatureC = predictServerTemperatureC(coolingPowerMw, expectedCooling);
+  const targetProfile = SCENARIO_PROFILES[scenarioId].profile;
+  const serverTemperatureC = targetProfile.serverTemperatureC === undefined
+    ? modeledServerTemperatureC
+    : lerp(modeledServerTemperatureC, targetProfile.serverTemperatureC, Math.min(1, Math.max(0, index / (HISTORY_LENGTH - 1))));
   const coolingEnergyKwh = coolingPowerMw * 1000 * SAMPLE_INTERVAL_HOURS;
   const waterUsageLiters = coolingEnergyKwh * WATER_INTENSITY_L_PER_KWH;
 
@@ -137,6 +149,7 @@ export const SCENARIO_IDS: ScenarioId[] = [
   "cooling-inefficiency",
   "environmental-stress",
   "unsafe-optimization",
+  "critical-facility-stress",
 ];
 
 export function isScenarioId(value: string): value is ScenarioId {

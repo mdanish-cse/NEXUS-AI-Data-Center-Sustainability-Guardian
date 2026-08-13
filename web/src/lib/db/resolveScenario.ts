@@ -17,7 +17,7 @@ export async function resolveScenario(
   if (!scenarioOverride) return repository.getScenario();
   if (!isScenarioId(scenarioOverride)) {
     throw new ValidationError(
-      `Unknown scenario "${scenarioOverride}". Expected one of: normal, workload-spike, cooling-inefficiency, environmental-stress, unsafe-optimization.`,
+      `Unknown scenario "${scenarioOverride}". Expected one of: normal, workload-spike, cooling-inefficiency, environmental-stress, unsafe-optimization, critical-facility-stress.`,
     );
   }
   return buildScenario(scenarioOverride);

@@ -17,6 +17,7 @@ const scenarios: { id: ScenarioId; label: string; description: string }[] = [
   { id: 'workload-spike', label: 'Workload Spike', description: 'Higher compute demand' },
   { id: 'environmental-stress', label: 'Environmental Stress', description: 'Elevated ambient temperature' },
   { id: 'unsafe-optimization', label: 'Unsafe Optimization', description: 'High-load baseline for the safety-gate demo' },
+  { id: 'critical-facility-stress', label: 'Critical Facility Stress', description: 'Synthetic chiller-delivery fault with thermal risk' },
 ]
 
 const SEVERITY_RANK: Record<Severity, number> = { high: 3, medium: 2, low: 1, normal: 0 }
@@ -111,29 +112,30 @@ function Header({ setMobileOpen, onRun, current, scenarioLabel, title }: { setMo
   )
 }
 
-function StatusStrip({ metrics, current, findingsCount }: { metrics: { pue: number; wue: number; expectedCoolingPowerMw: number } | null; current: Telemetry | null; findingsCount: number }) {
+function StatusStrip({ metrics, current, findingsCount, isCritical }: { metrics: { pue: number; wue: number; expectedCoolingPowerMw: number } | null; current: Telemetry | null; findingsCount: number; isCritical: boolean }) {
   const stable = findingsCount === 0
   const clampScore = (value: number) => Math.max(0, Math.min(100, value))
   const reliabilityScore = current ? clampScore(100 - Math.max(0, current.serverTemperatureC - MAX_SAFE_SERVER_TEMPERATURE_C) * 10) : null
   const energyScore = metrics && current ? clampScore((metrics.expectedCoolingPowerMw / current.coolingPowerMw) * 100) : null
   // 0.9 L/kWh is the demo's efficient-water reference; score derives from WUE.
   const waterScore = metrics ? clampScore((0.9 / metrics.wue) * 100) : null
+  const scoreTone = (score: number) => score <= 70 ? 'critical' : score >= 85 ? 'good' : 'warn'
   return (
-    <Panel className="status-strip">
+    <Panel className={`status-strip ${isCritical ? 'critical' : ''}`}>
       <div>
         <p className="eyebrow">OPERATIONAL POSTURE</p>
         <div className="status-title">
-          <span className="status-pill"><span className="dot teal" />{stable ? 'Stable' : 'Attention'}</span>
-          <strong>{stable ? 'All monitored metrics are tracking their expected baselines.' : `${findingsCount} active finding${findingsCount === 1 ? '' : 's'} require review.`}</strong>
+          <span className="status-pill"><span className={`dot ${isCritical ? 'coral' : 'teal'}`} />{stable ? 'Stable' : isCritical ? 'Critical' : 'Attention'}</span>
+          <strong>{stable ? 'All monitored metrics are tracking their expected baselines.' : isCritical ? 'Critical reliability and sustainability findings require immediate operator review.' : `${findingsCount} active finding${findingsCount === 1 ? '' : 's'} require review.`}</strong>
         </div>
       </div>
       <div className="status-right">
         <span className="demo-label">Demo telemetry</span>
         {metrics && current && (
           <>
-            <div className="status-stat"><span className={`ring ${reliabilityScore! >= 90 ? 'good' : 'warn'}`} /><div><small>Reliability</small><strong>{reliabilityScore!.toFixed(1)}%</strong></div></div>
-            <div className="status-stat"><span className={`ring ${energyScore! >= 85 ? 'good' : 'warn'}`} /><div><small>Energy</small><strong>{energyScore!.toFixed(1)}%</strong></div></div>
-            <div className="status-stat"><span className={`ring ${waterScore! >= 85 ? 'good' : 'warn'}`} /><div><small>Water</small><strong>{waterScore!.toFixed(1)}%</strong></div></div>
+            <div className="status-stat"><span className={`ring ${scoreTone(reliabilityScore!)}`} /><div><small>Reliability</small><strong>{reliabilityScore!.toFixed(1)}%</strong></div></div>
+            <div className="status-stat"><span className={`ring ${scoreTone(energyScore!)}`} /><div><small>Energy</small><strong>{energyScore!.toFixed(1)}%</strong></div></div>
+            <div className="status-stat"><span className={`ring ${scoreTone(waterScore!)}`} /><div><small>Water</small><strong>{waterScore!.toFixed(1)}%</strong></div></div>
           </>
         )}
       </div>
@@ -413,7 +415,7 @@ export default function Home() {
           ) : (
             <>
               {page !== 'command-center' && <div className="page-intro"><p className="eyebrow">{pageCopy.eyebrow}</p><h2>{pageCopy.heading}</h2><p>{pageCopy.description}</p></div>}
-              {page === 'command-center' && <StatusStrip metrics={metrics} current={current} findingsCount={findings.length} />}
+              {page === 'command-center' && <StatusStrip metrics={metrics} current={current} findingsCount={findings.length} isCritical={findings.some((finding) => finding.severity === 'high')} />}
               {(page === 'command-center' || page === 'telemetry') && <><div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div><div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div><TelemetryCharts history={history} primaryFinding={primaryFinding} /></>}
               {(page === 'command-center' || page === 'anomalies') && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
               {page === 'command-center' && <div className="insight-grid">

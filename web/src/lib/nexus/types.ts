@@ -15,7 +15,8 @@ export type ScenarioId =
   | "workload-spike"
   | "cooling-inefficiency"
   | "environmental-stress"
-  | "unsafe-optimization";
+  | "unsafe-optimization"
+  | "critical-facility-stress";
 
 export interface Telemetry {
   id: string;

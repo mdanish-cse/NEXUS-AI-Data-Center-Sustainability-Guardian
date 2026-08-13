@@ -44,7 +44,12 @@ export function runSimulation(baseline: Telemetry, params: SimulationParams): Si
   const coolingReductionFactor = clamp(1 - COOLING_SETPOINT_SENSITIVITY_PER_C * setpointDelta, 0, 1.5);
   const newCoolingPowerMw = newExpectedCoolingMw * coolingReductionFactor;
 
-  const predictedServerTemperatureC = predictServerTemperatureC(newCoolingPowerMw, newExpectedCoolingMw);
+  // Never recommend a change while the observed baseline is already above the
+  // thermal threshold; the underlying equipment fault must be resolved first.
+  const predictedServerTemperatureC = Math.max(
+    baseline.serverTemperatureC,
+    predictServerTemperatureC(newCoolingPowerMw, newExpectedCoolingMw),
+  );
   const newWaterUsageLiters = newCoolingPowerMw * 1000 * SAMPLE_INTERVAL_HOURS * WATER_INTENSITY_L_PER_KWH;
 
   const baselineEnergyMwh = powerToEnergyMwh(baseline.itPowerMw + baseline.coolingPowerMw, 1);

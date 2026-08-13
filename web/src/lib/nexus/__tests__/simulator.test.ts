@@ -22,6 +22,13 @@ describe("runSimulation", () => {
     expect(result.recommended).toBe(true);
   });
 
+  it("rejects simulation when the critical scenario baseline is already above the thermal threshold", () => {
+    const { current } = buildScenario("critical-facility-stress", NOW);
+    const result = runSimulation(current, { coolingSetpointDeltaC: 0 });
+    expect(result.safety.status).toBe("unsafe");
+    expect(result.recommended).toBe(false);
+  });
+
   it("keeps a workload-only change safe when cooling isn't reduced (cooling scales with the new load automatically)", () => {
     const { current } = buildScenario("normal", NOW);
     const result = runSimulation(current, { itWorkloadDeltaPercent: 20 });
