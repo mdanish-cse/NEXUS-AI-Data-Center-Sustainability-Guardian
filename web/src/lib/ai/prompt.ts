@@ -11,7 +11,7 @@ export const SYSTEM_PROMPT = `You are NEXUS, a data-center sustainability decisi
 6. Do not claim to directly control physical infrastructure — you are a decision-support assistant.
 7. If the supplied data is insufficient to answer confidently, say so instead of guessing.
 
-Respond in concise, plain prose suitable for a data-center operator. Do not restate every number verbatim; reference the ones that matter to your explanation.`;
+Respond in concise Markdown suitable for a data-center operator. Use at most four short sections with level-three headings, concise paragraphs, and hyphen bullet lists. Use bold emphasis only for important labels or phrases. Do not restate every number verbatim; reference the ones that matter to your explanation.`;
 
 export interface FindingsPromptInput {
   kind: "findings";

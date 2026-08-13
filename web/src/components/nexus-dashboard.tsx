@@ -36,6 +36,40 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }) + ' WIB'
 }
 
+/** Renders the small, predictable Markdown subset requested from the AI without injecting HTML. */
+function renderInlineMarkdown(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : part.replaceAll('*', ''),
+  )
+}
+
+function AIExplanation({ text }: { text: string }) {
+  const blocks: React.ReactNode[] = []
+  const lines = text.split('\n')
+  let bullets: string[] = []
+  const flushBullets = () => {
+    if (bullets.length > 0) {
+      blocks.push(<ul key={`list-${blocks.length}`}>{bullets.map((bullet, index) => <li key={index}>{renderInlineMarkdown(bullet)}</li>)}</ul>)
+      bullets = []
+    }
+  }
+
+  lines.forEach((line) => {
+    const value = line.trim()
+    if (!value) { flushBullets(); return }
+    const heading = value.match(/^#{1,3}\s+(.+)$/)
+    if (heading) { flushBullets(); blocks.push(<h3 key={`heading-${blocks.length}`}>{renderInlineMarkdown(heading[1])}</h3>); return }
+    const bullet = value.match(/^[-*]\s+(.+)$/)
+    if (bullet) { bullets.push(bullet[1]); return }
+    flushBullets()
+    blocks.push(<p key={`paragraph-${blocks.length}`}>{renderInlineMarkdown(value)}</p>)
+  })
+  flushBullets()
+  return <div className="ai-content">{blocks}</div>
+}
+
 /** Normalizes a series of raw values into an 80x24 sparkline point string — display-only, no business math. */
 function sparkPoints(values: number[]): string {
   if (values.length < 2) return '0,20 80,20'
@@ -223,7 +257,7 @@ function AIInsight({ findings }: { findings: Finding[] }) {
       ) : error ? (
         <div className="ai-empty">{error}</div>
       ) : result ? (
-        <div className="ai-content"><p style={{ whiteSpace: 'pre-wrap' }}>{result.explanation}</p></div>
+        <AIExplanation text={result.explanation} />
       ) : (
         <div className="ai-empty">Run analysis to generate a qualitative explanation from the structured finding{findings.length === 1 ? '' : 's'}.</div>
       )}
