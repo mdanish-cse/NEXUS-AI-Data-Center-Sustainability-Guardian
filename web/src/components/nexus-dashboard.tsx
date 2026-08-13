@@ -186,14 +186,18 @@ function StatusStrip({ metrics, current, findingsCount, isCritical }: { metrics:
 
 function TelemetryCharts({ history, primaryFinding }: { history: Telemetry[]; primaryFinding: Finding | null }) {
   const [range, setRange] = useState('24H')
-  const energyData = history.map((t) => ({ time: formatTime(t.timestamp), it: t.itPowerMw, cooling: t.coolingPowerMw, total: t.itPowerMw + t.coolingPowerMw }))
-  const thermalData = history.map((t) => ({ time: formatTime(t.timestamp), ambient: t.ambientTemperatureC, server: t.serverTemperatureC, threshold: MAX_SAFE_SERVER_TEMPERATURE_C }))
+  const rangeMs = { '6H': 6 * 60 * 60 * 1000, '24H': 24 * 60 * 60 * 1000, '7D': 7 * 24 * 60 * 60 * 1000 }[range] ?? 24 * 60 * 60 * 1000
+  const latestTimestamp = new Date(history[history.length - 1].timestamp).getTime()
+  const visibleHistory = history.filter((telemetry) => new Date(telemetry.timestamp).getTime() >= latestTimestamp - rangeMs)
+  const chartHistory = visibleHistory.length >= 2 ? visibleHistory : history
+  const energyData = chartHistory.map((t) => ({ time: formatTime(t.timestamp), it: t.itPowerMw, cooling: t.coolingPowerMw, total: t.itPowerMw + t.coolingPowerMw }))
+  const thermalData = chartHistory.map((t) => ({ time: formatTime(t.timestamp), ambient: t.ambientTemperatureC, server: t.serverTemperatureC, threshold: MAX_SAFE_SERVER_TEMPERATURE_C }))
   const latest = history[history.length - 1]
   const withinThreshold = latest.serverTemperatureC <= MAX_SAFE_SERVER_TEMPERATURE_C
   return (
     <div id="telemetry" className="chart-grid">
       <Panel className="chart-panel">
-        <div className="panel-heading"><div><p className="eyebrow">LIVE TELEMETRY</p><h2>Energy & Cooling Demand</h2></div><div className="segmented" role="group" aria-label="Chart range">{['6H', '24H', '7D'].map((r) => <button key={r} className={range === r ? 'selected' : ''} onClick={() => setRange(r)}>{r}</button>)}</div></div>
+        <div className="panel-heading"><div><p className="eyebrow">LIVE TELEMETRY</p><h2>Energy & Cooling Demand</h2></div><div className="segmented" role="group" aria-label="Chart range">{['6H', '24H', '7D'].map((r) => <button key={r} className={range === r ? 'selected' : ''} aria-pressed={range === r} onClick={() => setRange(r)}>{r}</button>)}</div></div>
         <div className="legend"><span><i className="cyan" />IT power</span><span><i className="amber" />Cooling power</span><span><i className="slate" />Total energy</span></div>
         <div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={energyData}><defs><linearGradient id="cyanFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#35c7e6" stopOpacity={.2} /><stop offset="100%" stopColor="#35c7e6" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#223146" vertical={false} /><XAxis dataKey="time" stroke="#718198" tickLine={false} axisLine={false} /><YAxis stroke="#718198" tickLine={false} axisLine={false} domain={[0, 'dataMax + 1']} /><Tooltip content={<ChartTip />} /><Area type="monotone" dataKey="it" name="IT power" stroke="#35c7e6" fill="url(#cyanFill)" strokeWidth={2} /><Line type="monotone" dataKey="cooling" name="Cooling power" stroke="#f5b74d" strokeWidth={2.5} dot={false} /><Line type="monotone" dataKey="total" name="Total energy" stroke="#7890a9" strokeWidth={1.5} strokeDasharray="4 4" dot={false} /></AreaChart></ResponsiveContainer></div>
         {primaryFinding && <div className="chart-note"><span className="dot amber" />{primaryFinding.message}</div>}
@@ -225,7 +229,7 @@ function Anomaly({ finding, scenario, setScenario, onSimulate }: { finding: Find
         <div><small>Actual</small><strong>{active ? finding!.actualValue.toFixed(2) : '—'} <em>{active ? METRIC_UNIT[finding!.metric] : ''}</em></strong></div>
         <div><small>Expected</small><strong>{active ? finding!.expectedValue.toFixed(2) : '—'} <em>{active ? METRIC_UNIT[finding!.metric] : ''}</em></strong></div>
         <div><small>Deviation</small><strong className={active ? 'coral-text' : 'teal-text'}>{active ? `+${finding!.deviationPercent.toFixed(1)}%` : '—'}</strong></div>
-        <div className="anomaly-actions"><button className="button secondary">View analysis</button><button className="button primary" onClick={onSimulate}>Simulate response</button></div>
+        <div className="anomaly-actions"><button className="button secondary" onClick={() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>View analysis</button><button className="button primary" onClick={onSimulate}>Simulate response</button></div>
       </div>
       <label className="scenario-select">
         <span>Scenario</span>
@@ -366,6 +370,7 @@ function Simulator({ scenario, current, onActivity }: { scenario: ScenarioId; cu
 }
 
 function EventFeed({ findings, activity }: { findings: Finding[]; activity: ActivityEvent[] }) {
+  const [showAll, setShowAll] = useState(false)
   const items = findings.length > 0
     ? [...findings].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((f) => ({
         time: formatTime(f.timestamp), title: METRIC_HEADLINE[f.metric], type: f.severity.toUpperCase(),
@@ -375,12 +380,13 @@ function EventFeed({ findings, activity }: { findings: Finding[]; activity: Acti
   const reportItems = [
     ...activity.map((event) => ({ time: formatTime(event.timestamp), title: event.title, type: event.type, tone: event.tone })),
     ...items,
-  ].slice(0, 6)
+  ]
+  const visibleItems = showAll ? reportItems : reportItems.slice(0, 6)
   return (
     <Panel className="events">
       <span id="reports" className="anchor-target" aria-hidden="true" />
-      <div className="panel-heading"><div><p className="eyebrow">ACTIVITY</p><h2>Recent operational events</h2></div><button className="text-button">View all activity <ChevronDown size={14} /></button></div>
-      <div className="timeline">{reportItems.map((item, i) => <div className="timeline-item" key={`${item.title}-${i}`}><span className={`timeline-dot ${item.tone}`} /><time>{item.time}</time><div><strong>{item.title}</strong><small>{item.type}</small></div></div>)}</div>
+      <div className="panel-heading"><div><p className="eyebrow">ACTIVITY</p><h2>Recent operational events</h2></div><button className="text-button" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? 'Show recent' : 'View all activity'} <ChevronDown size={14} /></button></div>
+      <div className="timeline">{visibleItems.map((item, i) => <div className="timeline-item" key={`${item.title}-${i}`}><span className={`timeline-dot ${item.tone}`} /><time>{item.time}</time><div><strong>{item.title}</strong><small>{item.type}</small></div></div>)}</div>
     </Panel>
   )
 }
