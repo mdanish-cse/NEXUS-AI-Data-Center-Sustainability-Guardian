@@ -211,7 +211,7 @@ function TelemetryCharts({ history, primaryFinding }: { history: Telemetry[]; pr
   )
 }
 
-function Anomaly({ finding, scenario, setScenario, onSimulate }: { finding: Finding | null; scenario: ScenarioId; setScenario: (s: ScenarioId) => void; onSimulate: () => void }) {
+function Anomaly({ finding, scenario, setScenario, onSimulate, onViewAnalysis }: { finding: Finding | null; scenario: ScenarioId; setScenario: (s: ScenarioId) => void; onSimulate: () => void; onViewAnalysis?: () => void }) {
   const active = finding !== null
   return (
     <Panel className={`anomaly ${active ? 'critical' : ''}`}>
@@ -229,7 +229,7 @@ function Anomaly({ finding, scenario, setScenario, onSimulate }: { finding: Find
         <div><small>Actual</small><strong>{active ? finding!.actualValue.toFixed(2) : '—'} <em>{active ? METRIC_UNIT[finding!.metric] : ''}</em></strong></div>
         <div><small>Expected</small><strong>{active ? finding!.expectedValue.toFixed(2) : '—'} <em>{active ? METRIC_UNIT[finding!.metric] : ''}</em></strong></div>
         <div><small>Deviation</small><strong className={active ? 'coral-text' : 'teal-text'}>{active ? `+${finding!.deviationPercent.toFixed(1)}%` : '—'}</strong></div>
-        <div className="anomaly-actions"><button className="button secondary" onClick={() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>View analysis</button><button className="button primary" onClick={onSimulate}>Simulate response</button></div>
+        <div className="anomaly-actions"><button className="button secondary" onClick={onViewAnalysis ?? (() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'center' }))}>View anomaly details</button><button className="button primary" onClick={onSimulate}>Simulate response</button></div>
       </div>
       <label className="scenario-select">
         <span>Scenario</span>
@@ -470,6 +470,7 @@ export default function Home() {
       { id: 'serverTemp', label: 'Server Temp', value: current.serverTemperatureC.toFixed(1), unit: '°C', trend: findingTrend(tempFinding, 'On baseline'), tone: findingTone(tempFinding), values: history.map((t) => t.serverTemperatureC) },
     ]
   }, [current, metrics, findings, history])
+  const executiveCards = metricCards.filter(({ id }) => ['totalPower', 'pue', 'wue', 'serverTemp'].includes(id))
 
   return (
     <div className="app-shell">
@@ -485,10 +486,18 @@ export default function Home() {
           ) : (
             <>
               {page !== 'command-center' && <div className="page-intro"><p className="eyebrow">{pageCopy.eyebrow}</p><h2>{pageCopy.heading}</h2><p>{pageCopy.description}</p></div>}
-              {page === 'command-center' && <StatusStrip metrics={metrics} current={current} findingsCount={findings.length} isCritical={findings.some((finding) => finding.severity === 'high')} />}
-              {(page === 'command-center' || page === 'telemetry') && <><div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div><div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div><TelemetryCharts history={history} primaryFinding={primaryFinding} /></>}
-              {(page === 'command-center' || page === 'anomalies') && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
-              {page === 'command-center' && <div className="insight-grid">
+              {page === 'command-center' && <>
+                <StatusStrip metrics={metrics} current={current} findingsCount={findings.length} isCritical={findings.some((finding) => finding.severity === 'high')} />
+                <div className="section-head executive-heading"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Executive operations overview</h2><p className="subcopy">A concise view of reliability, efficiency, and the next best operational decision.</p></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div>
+                <div className="metrics-grid executive-metrics">{executiveCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div>
+                <div className="priority-heading"><div><p className="eyebrow">ACTIVE PRIORITY FINDING</p><h2>Decision-ready anomaly</h2></div>{primaryFinding && <span className="severity">{primaryFinding.severity.toUpperCase()}</span>}</div>
+                <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} onViewAnalysis={() => navigateTo('anomalies')} />
+                <Panel className="decision-support"><div><p className="eyebrow">DECISION SUPPORT</p><h2>Simulate before recommending action</h2><p>Every scenario is checked against the thermal reliability gate before it can be accepted.</p></div><button className="button primary" onClick={scrollSim}><SlidersHorizontal size={15} />Open What-if Simulator</button></Panel>
+                <EventFeed findings={findings} activity={activity} />
+              </>}
+              {page === 'telemetry' && <TelemetryCharts history={history} primaryFinding={primaryFinding} />}
+              {page === 'anomalies' && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
+              {false && <div className="insight-grid">
                 <AIInsight findings={findings} onActivity={addActivity} />
                 <Panel className="method-panel">
                   <div className="method-icon"><ShieldCheck size={18} /></div>
@@ -500,8 +509,8 @@ export default function Home() {
               </div>}
               {page === 'anomalies' && <AIInsight findings={findings} onActivity={addActivity} />}
               {/* key={scenario} remounts (rather than effect-resets) the simulator's sliders/result when the scenario changes */}
-              {(page === 'command-center' || page === 'simulator') && <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} onActivity={addActivity} /></div>}
-              {(page === 'command-center' || page === 'reports') && <EventFeed findings={findings} activity={activity} />}
+              {page === 'simulator' && <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} onActivity={addActivity} /></div>}
+              {page === 'reports' && <EventFeed findings={findings} activity={activity} />}
               <footer>All telemetry shown is synthetic demo data for hackathon evaluation. Simulation outputs are estimates, not guarantees of real-world savings or operational performance.</footer>
             </>
           )}
