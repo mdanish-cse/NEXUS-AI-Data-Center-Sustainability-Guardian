@@ -8,7 +8,7 @@ The repository currently contains:
 - A standard Next.js + TypeScript + Tailwind + ESLint scaffold in `web/`,
   generated with `create-next-app`.
 
-It intentionally does **not** contain NEXUS-specific functionality. In
+It intentionally does **not** contain Coolara-specific functionality. In
 particular, no dashboard, telemetry dataset, database schema or implementation,
 anomaly detection, simulation engine, safety logic, charts, or AI integration
 has been implemented before the build window.

@@ -108,7 +108,7 @@ function Sidebar({ mobileOpen, setMobileOpen, activeNav, onNavigate, findingsCou
   const navItems = [['Command Center', Gauge, 'command-center'], ['Telemetry', Activity, 'telemetry'], ['Anomalies', AlertTriangle, 'anomalies'], ['Simulator', SlidersHorizontal, 'simulator'], ['Reports', BarChart3, 'reports']] as const
   return (
     <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
-      <div className="brand"><Hexagon size={26} strokeWidth={1.6} /><span>NEXUS</span><button className="icon-button mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button></div>
+      <div className="brand"><Hexagon size={26} strokeWidth={1.6} /><span>COOLARA</span><button className="icon-button mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button></div>
       <p className="eyebrow">SUSTAINABILITY GUARDIAN</p>
       <nav aria-label="Primary navigation">
         {navItems.map(([label, Icon, id]) => (
@@ -131,7 +131,7 @@ function Header({ setMobileOpen, onRun, current, scenarioLabel, title }: { setMo
   return (
     <header className="topbar">
       <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
-      <div><p className="eyebrow">NEXUS / OPERATIONS</p><h1>{title}</h1></div>
+      <div><p className="eyebrow">COOLARA / OPERATIONS</p><h1>{title}</h1></div>
       <div className="top-actions">
         <div className="site-select"><span className="dot teal" />Batam Edge Campus <b>· DC-01</b><ChevronDown size={14} /></div>
         <div className="updated">Last updated <strong>{current ? formatDateTime(current.timestamp) : '—'}</strong></div>
@@ -261,7 +261,7 @@ function AIInsight({ findings, onActivity }: { findings: Finding[]; onActivity: 
     <Panel className="ai-panel">
       <div className="ai-heading">
         <div className="ai-icon"><BrainCircuit size={18} /></div>
-        <div><p className="eyebrow">NEXUS AI ANALYSIS</p><h2>Explain the finding</h2></div>
+        <div><p className="eyebrow">COOLARA AI ANALYSIS</p><h2>Explain the finding</h2></div>
         {result && <span className="confidence">Provider · {result.provider}</span>}
       </div>
       <div className="ai-label">AI-assisted qualitative explanation</div>
@@ -430,7 +430,7 @@ export default function Home() {
   const pageCopy = {
     'command-center': { title: 'Command Center', eyebrow: 'FACILITY SNAPSHOT', heading: 'Efficiency overview', description: 'Monitor current energy, water, and thermal performance.' },
     telemetry: { title: 'Telemetry', eyebrow: 'LIVE TELEMETRY', heading: 'Facility telemetry', description: 'Review live synthetic energy, cooling, and thermal conditions.' },
-    anomalies: { title: 'Anomaly Detection', eyebrow: 'DETECTION & EXPLANATION', heading: 'Anomaly detection', description: 'Review deterministic findings and ask NEXUS AI for a qualitative explanation.' },
+    anomalies: { title: 'Anomaly Detection', eyebrow: 'DETECTION & EXPLANATION', heading: 'Anomaly detection', description: 'Review deterministic findings and ask Coolara AI for a qualitative explanation.' },
     simulator: { title: 'What-if Simulator', eyebrow: 'DECISION SUPPORT', heading: 'What-if optimization', description: 'Test operational changes safely before recommending action.' },
     reports: { title: 'Reports', eyebrow: 'ACTIVITY & REPORTING', heading: 'Operational reports', description: 'Review recent findings and operational events.' },
   }[page] ?? { title: 'Command Center', eyebrow: 'FACILITY SNAPSHOT', heading: 'Efficiency overview', description: 'Monitor current energy, water, and thermal performance.' }
@@ -501,9 +501,9 @@ export default function Home() {
                 <AIInsight findings={findings} onActivity={addActivity} />
                 <Panel className="method-panel">
                   <div className="method-icon"><ShieldCheck size={18} /></div>
-                  <p className="eyebrow">NEXUS METHOD</p>
+                  <p className="eyebrow">COOLARA METHOD</p>
                   <h2>Monitor → Detect → Explain → Simulate → Optimize</h2>
-                  <p>Recommendations are gated by a configurable thermal reliability threshold. NEXUS supports decisions; it does not control infrastructure.</p>
+                  <p>Recommendations are gated by a configurable thermal reliability threshold. Coolara supports decisions; it does not control infrastructure.</p>
                   <div className="method-steps">{['Monitor', 'Detect', 'Explain', 'Simulate', 'Optimize'].map((s, i) => <span key={s} className={i < 3 ? 'done' : ''}>{i < 3 ? <Check size={12} /> : i + 1} {s}</span>)}</div>
                 </Panel>
               </div>}

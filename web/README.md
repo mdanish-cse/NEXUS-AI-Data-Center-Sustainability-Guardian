@@ -3,7 +3,7 @@ This is a standard [Next.js](https://nextjs.org) scaffold generated with
 
 ## Pre-build status
 
-This folder is intentionally framework-only pre-existing code. NEXUS-specific
+This folder is intentionally framework-only pre-existing code. Coolara-specific
 features must be built during the official hackathon window. See the root
 [`PRE_EXISTING_CODE_DISCLOSURE.md`](../PRE_EXISTING_CODE_DISCLOSURE.md) and
 [`TEAM_WORK_SPLIT.md`](../TEAM_WORK_SPLIT.md) before starting implementation.

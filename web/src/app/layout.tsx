@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NEXUS | Sustainability Guardian",
+  title: "Coolara | Sustainability Guardian",
   description: "A decision-support command center for sustainable data-center operations.",
 };
 

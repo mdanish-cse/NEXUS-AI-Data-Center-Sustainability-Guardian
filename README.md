@@ -1,8 +1,8 @@
-# NEXUS
+# Coolara
 
 ## AI Data Center Sustainability Guardian
 
-NEXUS is a hackathon prototype that helps data-center operators monitor sustainability telemetry, identify anomalies, understand likely contributing factors, safely simulate operational changes, and evaluate optimization options.
+Coolara is a hackathon prototype that helps data-center operators monitor sustainability telemetry, identify anomalies, understand likely contributing factors, safely simulate operational changes, and evaluate optimization options.
 
 **Monitor → Detect → Explain → Simulate → Optimize**
 
@@ -20,7 +20,7 @@ Challenge: Water & Energy Guardian: Sustainable Data Center Operations
 - What-if simulator for cooling setpoints, IT workload, and ambient assumptions.
 - Thermal and reliability safety gate that marks unsafe scenarios as rejected.
 
-NEXUS is a decision-support prototype. It does not autonomously control data-center equipment.
+Coolara is a decision-support prototype. It does not autonomously control data-center equipment.
 
 ## Technology
 
@@ -58,12 +58,12 @@ The final project will disclose the tools actually used during the event. Antici
 
 Before the official build window, this repository contained product, scope, safety, compliance, and teamwork documentation, plus a standard Next.js + TypeScript + Tailwind + ESLint scaffold generated with `create-next-app`.
 
-No NEXUS-specific functionality was implemented before the build window: no dashboard, telemetry dataset, database schema, anomaly detection, simulator, safety logic, charts, or AI integration.
+No Coolara-specific functionality was implemented before the build window: no dashboard, telemetry dataset, database schema, anomaly detection, simulator, safety logic, charts, or AI integration.
 
 ## Project documents
 
-- [Product requirements](PRD.md)
-- [Project context](PROJECT_CONTEXT.md)
-- [Pre-build checklist](PRE_BUILD_CHECKLIST.md)
-- [Pre-existing code disclosure](PRE_EXISTING_CODE_DISCLOSURE.md)
-- [Team work split](TEAM_WORK_SPLIT.md)
+- [Pre-existing materials](PRE_EXISTING_MATERIALS/README.md)
+- [Product requirements](PRE_EXISTING_MATERIALS/PRD.md)
+- [Project context](PRE_EXISTING_MATERIALS/PROJECT_CONTEXT.md)
+- [Pre-build checklist](PRE_EXISTING_MATERIALS/PRE_BUILD_CHECKLIST.md)
+- [AI/tools disclosure](PRE_EXISTING_MATERIALS/AI_TOOLS_DISCLOSURE.md)

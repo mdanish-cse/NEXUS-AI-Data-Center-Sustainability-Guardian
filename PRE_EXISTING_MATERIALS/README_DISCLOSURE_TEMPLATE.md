@@ -1,4 +1,4 @@
-# NEXUS
+# Coolara
 
 AI Data Center Sustainability Guardian
 
@@ -10,7 +10,7 @@ Challenge: Water & Energy Guardian: Sustainable Data Center Operations
 
 ## Overview
 
-NEXUS is an AI-powered decision-support platform designed to help data center operators identify energy and water inefficiencies, understand possible causes, simulate operational changes, and evaluate estimated impact while considering reliability constraints.
+Coolara is an AI-powered decision-support platform designed to help data center operators identify energy and water inefficiencies, understand possible causes, simulate operational changes, and evaluate estimated impact while considering reliability constraints.
 
 ## AI Disclosure
 

@@ -1,4 +1,4 @@
-# NEXUS — Project Context
+# Coolara — Project Context
 ## Batam Singapore Hackathon 2026
 
 ### Event
@@ -11,13 +11,13 @@
 - AI tools are allowed; models and data used must be disclosed.
 
 ### Project
-**Working title:** NEXUS — AI Data Center Sustainability Guardian
+**Working title:** Coolara — AI Data Center Sustainability Guardian
 
 ### Core problem
 Data centers consume substantial energy and water, especially for cooling. Operators need better decision support to identify inefficiency and evaluate operational changes without compromising reliability.
 
 ### Solution
-NEXUS is an AI-powered decision-support platform that helps data center operators:
+Coolara is an AI-powered decision-support platform that helps data center operators:
 **Monitor → Detect → Explain → Simulate → Optimize**
 
 ### MVP

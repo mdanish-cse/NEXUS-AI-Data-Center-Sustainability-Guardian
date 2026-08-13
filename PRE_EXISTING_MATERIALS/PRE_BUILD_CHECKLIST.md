@@ -1,4 +1,4 @@
-# NEXUS — Pre-Build Checklist
+# Coolara — Pre-Build Checklist
 
 ## Goal
 
@@ -109,7 +109,7 @@ After feature freeze:
 
 ### No Model Training Required for the MVP
 
-The NEXUS AI layer does **not** require training or fine-tuning an LLM.
+The Coolara AI layer does **not** require training or fine-tuning an LLM.
 
 Do NOT spend hackathon time on:
 - [ ] Training an LLM from scratch
@@ -159,7 +159,7 @@ Use the LLM for:
 Suggested rules:
 
 ```text
-You are NEXUS, a data-center sustainability decision-support assistant.
+You are Coolara, a data-center sustainability decision-support assistant.
 
 1. Never invent measurements.
 2. Never invent savings percentages.
@@ -183,4 +183,4 @@ You are NEXUS, a data-center sustainability decision-support assistant.
 
 ### Technical Positioning
 
-> **NEXUS is a decision-support system where deterministic telemetry analysis and safety constraints provide the operational truth, while the LLM provides explanation and recommendation.**
+> **Coolara is a decision-support system where deterministic telemetry analysis and safety constraints provide the operational truth, while the LLM provides explanation and recommendation.**
