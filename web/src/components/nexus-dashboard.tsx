@@ -85,6 +85,7 @@ function Sidebar({ mobileOpen, setMobileOpen, activeNav, onNavigate, findingsCou
 }
 
 function Header({ setMobileOpen, onRun, current, scenarioLabel }: { setMobileOpen: (v: boolean) => void; onRun: () => void; current: Telemetry | null; scenarioLabel: string | null }) {
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   return (
     <header className="topbar">
       <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
@@ -94,7 +95,17 @@ function Header({ setMobileOpen, onRun, current, scenarioLabel }: { setMobileOpe
         <div className="updated">Last updated <strong>{current ? formatDateTime(current.timestamp) : '—'}</strong></div>
         <span className="stream"><span className="dot teal pulse" />{scenarioLabel ?? 'Telemetry stream active'}</span>
         <button className="button primary" onClick={onRun}><Play size={15} fill="currentColor" />Run simulation</button>
-        <button className="icon-button" aria-label="Notifications"><Bell size={18} /><span className="notification-dot" /></button>
+        <div className="notification-wrap">
+          <button className="icon-button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={18} /><span className="notification-dot" /></button>
+          {notificationsOpen && (
+            <div className="notification-popover" role="dialog" aria-label="Notifications">
+              <div className="notification-header"><strong>Notifications</strong><span>Demo feed</span></div>
+              <button className="notification-item" onClick={() => setNotificationsOpen(false)}><span className="notification-icon"><AlertTriangle size={15} /></span><span><strong>{scenarioLabel ?? 'Telemetry anomaly detected'}</strong><small>Review the current synthetic telemetry findings.</small></span></button>
+              <button className="notification-item" onClick={() => setNotificationsOpen(false)}><span className="notification-icon teal-icon"><Activity size={15} /></span><span><strong>Telemetry stream active</strong><small>Latest synthetic reading received.</small></span></button>
+              <button className="notification-clear" onClick={() => setNotificationsOpen(false)}>Dismiss notifications</button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )
