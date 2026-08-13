@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { NexusLanding } from '@/components/nexus-landing'
 
 export default function Home() {
-  redirect('/dashboard')
+  return <NexusLanding />
 }

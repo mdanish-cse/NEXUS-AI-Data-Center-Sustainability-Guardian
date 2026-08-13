@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NEXUS | Sustainability Guardian",
-  description: "A decision-support command center for sustainable data-center operations.",
+  title: "NEXUS | Sustainable Data-Center Operations",
+  description: "NEXUS helps infrastructure teams monitor, explain, simulate, and optimize sustainable data-center operations.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
