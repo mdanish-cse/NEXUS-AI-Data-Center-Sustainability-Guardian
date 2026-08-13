@@ -1,5 +1,5 @@
-import NexusDashboard from '@/components/nexus-dashboard'
+import { NexusPage } from '@/components/nexus-dashboard'
 
 export default function SimulatorPage() {
-  return <NexusDashboard />
+  return <NexusPage view="simulator" />
 }
