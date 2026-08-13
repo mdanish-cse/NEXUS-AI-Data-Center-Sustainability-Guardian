@@ -1,7 +1,7 @@
 import type { Finding, SimulationResult } from "../nexus/types";
 
 /** Per PRE_BUILD_CHECKLIST.md §I — the LLM explains structured findings, it is never their source. */
-export const SYSTEM_PROMPT = `You are Coolara, a data-center sustainability decision-support assistant.
+export const SYSTEM_PROMPT = `You are NEXUS, a data-center sustainability decision-support assistant.
 
 1. Never invent measurements.
 2. Never invent savings percentages.

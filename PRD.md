@@ -1,8 +1,8 @@
-# Coolara — Product Requirements Document
+# NEXUS — Product Requirements Document
 
 ## 1. Product Summary
 
-Coolara is an AI-powered data center sustainability decision-support platform focused on energy and water efficiency.
+NEXUS is an AI-powered data center sustainability decision-support platform focused on energy and water efficiency.
 
 ### Value proposition
 > Help data center operators reduce energy and water waste while maintaining operational reliability.
