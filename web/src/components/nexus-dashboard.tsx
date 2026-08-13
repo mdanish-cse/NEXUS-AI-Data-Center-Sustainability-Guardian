@@ -111,8 +111,13 @@ function Header({ setMobileOpen, onRun, current, scenarioLabel, title }: { setMo
   )
 }
 
-function StatusStrip({ metrics, findingsCount }: { metrics: { pue: number; wue: number } | null; findingsCount: number }) {
+function StatusStrip({ metrics, current, findingsCount }: { metrics: { pue: number; wue: number; expectedCoolingPowerMw: number } | null; current: Telemetry | null; findingsCount: number }) {
   const stable = findingsCount === 0
+  const clampScore = (value: number) => Math.max(0, Math.min(100, value))
+  const reliabilityScore = current ? clampScore(100 - Math.max(0, current.serverTemperatureC - MAX_SAFE_SERVER_TEMPERATURE_C) * 10) : null
+  const energyScore = metrics && current ? clampScore((metrics.expectedCoolingPowerMw / current.coolingPowerMw) * 100) : null
+  // 0.9 L/kWh is the demo's efficient-water reference; score derives from WUE.
+  const waterScore = metrics ? clampScore((0.9 / metrics.wue) * 100) : null
   return (
     <Panel className="status-strip">
       <div>
@@ -124,11 +129,11 @@ function StatusStrip({ metrics, findingsCount }: { metrics: { pue: number; wue: 
       </div>
       <div className="status-right">
         <span className="demo-label">Demo telemetry</span>
-        {metrics && (
+        {metrics && current && (
           <>
-            <div className="status-stat"><span className="ring good" /><div><small>PUE</small><strong>{metrics.pue.toFixed(2)}</strong></div></div>
-            <div className="status-stat"><span className="ring good" /><div><small>WUE</small><strong>{metrics.wue.toFixed(2)}</strong></div></div>
-            <div className="status-stat"><span className={`ring ${stable ? 'good' : 'warn'}`} /><div><small>Findings</small><strong>{findingsCount}</strong></div></div>
+            <div className="status-stat"><span className={`ring ${reliabilityScore! >= 90 ? 'good' : 'warn'}`} /><div><small>Reliability</small><strong>{reliabilityScore!.toFixed(1)}%</strong></div></div>
+            <div className="status-stat"><span className={`ring ${energyScore! >= 85 ? 'good' : 'warn'}`} /><div><small>Energy</small><strong>{energyScore!.toFixed(1)}%</strong></div></div>
+            <div className="status-stat"><span className={`ring ${waterScore! >= 85 ? 'good' : 'warn'}`} /><div><small>Water</small><strong>{waterScore!.toFixed(1)}%</strong></div></div>
           </>
         )}
       </div>
@@ -408,7 +413,7 @@ export default function Home() {
           ) : (
             <>
               {page !== 'command-center' && <div className="page-intro"><p className="eyebrow">{pageCopy.eyebrow}</p><h2>{pageCopy.heading}</h2><p>{pageCopy.description}</p></div>}
-              {page === 'command-center' && <StatusStrip metrics={metrics} findingsCount={findings.length} />}
+              {page === 'command-center' && <StatusStrip metrics={metrics} current={current} findingsCount={findings.length} />}
               {(page === 'command-center' || page === 'telemetry') && <><div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div><div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div><TelemetryCharts history={history} primaryFinding={primaryFinding} /></>}
               {(page === 'command-center' || page === 'anomalies') && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
               {page === 'command-center' && <div className="insight-grid">
