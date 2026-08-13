@@ -84,12 +84,12 @@ function Sidebar({ mobileOpen, setMobileOpen, activeNav, onNavigate, findingsCou
   )
 }
 
-function Header({ setMobileOpen, onRun, current, scenarioLabel }: { setMobileOpen: (v: boolean) => void; onRun: () => void; current: Telemetry | null; scenarioLabel: string | null }) {
+function Header({ setMobileOpen, onRun, current, scenarioLabel, title }: { setMobileOpen: (v: boolean) => void; onRun: () => void; current: Telemetry | null; scenarioLabel: string | null; title: string }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   return (
     <header className="topbar">
       <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
-      <div><p className="eyebrow">NEXUS / OPERATIONS</p><h1>Command Center</h1></div>
+      <div><p className="eyebrow">NEXUS / OPERATIONS</p><h1>{title}</h1></div>
       <div className="top-actions">
         <div className="site-select"><span className="dot teal" />Batam Edge Campus <b>· DC-01</b><ChevronDown size={14} /></div>
         <div className="updated">Last updated <strong>{current ? formatDateTime(current.timestamp) : '—'}</strong></div>
@@ -349,6 +349,14 @@ export default function Home() {
   const activeNav = pathname === '/dashboard' ? 'command-center' : pathname.slice(1) || 'command-center'
   const navigateTo = (id: string) => { setMobileOpen(false); router.push(`/${id === 'command-center' ? 'dashboard' : id}`) }
   const scrollSim = () => navigateTo('simulator')
+  const page = activeNav as 'command-center' | 'telemetry' | 'anomalies' | 'simulator' | 'reports'
+  const pageCopy = {
+    'command-center': { title: 'Command Center', eyebrow: 'FACILITY SNAPSHOT', heading: 'Efficiency overview', description: 'Monitor current energy, water, and thermal performance.' },
+    telemetry: { title: 'Telemetry', eyebrow: 'LIVE TELEMETRY', heading: 'Facility telemetry', description: 'Review live synthetic energy, cooling, and thermal conditions.' },
+    anomalies: { title: 'Anomaly Detection', eyebrow: 'DETECTION & EXPLANATION', heading: 'Anomaly detection', description: 'Review deterministic findings and ask NEXUS AI for a qualitative explanation.' },
+    simulator: { title: 'What-if Simulator', eyebrow: 'DECISION SUPPORT', heading: 'What-if optimization', description: 'Test operational changes safely before recommending action.' },
+    reports: { title: 'Reports', eyebrow: 'ACTIVITY & REPORTING', heading: 'Operational reports', description: 'Review recent findings and operational events.' },
+  }[page] ?? { title: 'Command Center', eyebrow: 'FACILITY SNAPSHOT', heading: 'Efficiency overview', description: 'Monitor current energy, water, and thermal performance.' }
 
   const current = data?.current ?? null
   const metrics = data?.metrics ?? null
@@ -391,7 +399,7 @@ export default function Home() {
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} activeNav={activeNav} onNavigate={navigateTo} findingsCount={findings.length} />
       {mobileOpen && <button className="mobile-overlay" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}
       <main className="main-content">
-        <Header setMobileOpen={setMobileOpen} onRun={scrollSim} current={current} scenarioLabel={data?.scenario.label ?? null} />
+        <Header setMobileOpen={setMobileOpen} onRun={scrollSim} current={current} scenarioLabel={data?.scenario.label ?? null} title={pageCopy.title} />
         <div className="dashboard">
           {fetchError ? (
             <Panel className="sim-placeholder"><p>{fetchError}</p></Panel>
@@ -399,12 +407,11 @@ export default function Home() {
             <Panel className="sim-placeholder"><p>Loading telemetry…</p></Panel>
           ) : (
             <>
-              <StatusStrip metrics={metrics} findingsCount={findings.length} />
-              <div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div>
-              <div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div>
-              <TelemetryCharts history={history} primaryFinding={primaryFinding} />
-              <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />
-              <div className="insight-grid">
+              {page !== 'command-center' && <div className="page-intro"><p className="eyebrow">{pageCopy.eyebrow}</p><h2>{pageCopy.heading}</h2><p>{pageCopy.description}</p></div>}
+              {page === 'command-center' && <StatusStrip metrics={metrics} findingsCount={findings.length} />}
+              {(page === 'command-center' || page === 'telemetry') && <><div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div><div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div><TelemetryCharts history={history} primaryFinding={primaryFinding} /></>}
+              {(page === 'command-center' || page === 'anomalies') && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
+              {page === 'command-center' && <div className="insight-grid">
                 <AIInsight findings={findings} />
                 <Panel className="method-panel">
                   <div className="method-icon"><ShieldCheck size={18} /></div>
@@ -413,10 +420,11 @@ export default function Home() {
                   <p>Recommendations are gated by a configurable thermal reliability threshold. NEXUS supports decisions; it does not control infrastructure.</p>
                   <div className="method-steps">{['Monitor', 'Detect', 'Explain', 'Simulate', 'Optimize'].map((s, i) => <span key={s} className={i < 3 ? 'done' : ''}>{i < 3 ? <Check size={12} /> : i + 1} {s}</span>)}</div>
                 </Panel>
-              </div>
+              </div>}
+              {page === 'anomalies' && <AIInsight findings={findings} />}
               {/* key={scenario} remounts (rather than effect-resets) the simulator's sliders/result when the scenario changes */}
-              <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} /></div>
-              <EventFeed findings={findings} />
+              {(page === 'command-center' || page === 'simulator') && <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} /></div>}
+              {(page === 'command-center' || page === 'reports') && <EventFeed findings={findings} />}
               <footer>All telemetry shown is synthetic demo data for hackathon evaluation. Simulation outputs are estimates, not guarantees of real-world savings or operational performance.</footer>
             </>
           )}
