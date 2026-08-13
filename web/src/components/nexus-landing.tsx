@@ -21,7 +21,7 @@ export function NexusLanding() {
 
   return <main className="landing-page">
     <nav className="landing-nav" aria-label="Primary navigation">
-      <Link href="/" className="landing-brand"><span className="brand-mark">N</span><span>NEXUS</span></Link>
+      <Link href="/" className="landing-brand"><img src="/nexus-logo.png" alt="NEXUS logo" className="brand-logo"/><span>NEXUS</span></Link>
       <div className="landing-nav-links"><a href="#capabilities">Capabilities</a><a href="#operating-model">Operating model</a><button className="landing-theme" onClick={toggleTheme} aria-label={lightMode ? 'Use dark mode' : 'Use light mode'}>{lightMode ? <Moon /> : <Sun />}</button><Link className="landing-nav-cta" href="/dashboard">Enter dashboard <ArrowRight /></Link></div>
     </nav>
 
