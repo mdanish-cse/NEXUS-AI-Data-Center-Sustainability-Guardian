@@ -47,7 +47,13 @@ function renderInlineMarkdown(text: string) {
 
 function AIExplanation({ text }: { text: string }) {
   const blocks: React.ReactNode[] = []
-  const lines = text.split('\n')
+  // Gemini can occasionally collapse Markdown into one line. Recover the
+  // expected numbered sections and bold-label bullets before rendering.
+  const normalized = text
+    .replace(/\s+(?=\d+\.\s+\*\*)/g, '\n\n')
+    .replace(/\s+(?=\*\*[^*]+\*\*:\s)/g, '\n')
+    .replace(/\s+(?=\*\([^)]{1,180}\)\s*$)/gm, '\n')
+  const lines = normalized.split('\n')
   let bullets: string[] = []
   const flushBullets = () => {
     if (bullets.length > 0) {
@@ -59,7 +65,7 @@ function AIExplanation({ text }: { text: string }) {
   lines.forEach((line) => {
     const value = line.trim()
     if (!value) { flushBullets(); return }
-    const heading = value.match(/^#{1,3}\s+(.+)$/)
+    const heading = value.match(/^(?:#{1,3}\s+|\d+\.\s+)(.+)$/)
     if (heading) { flushBullets(); blocks.push(<h3 key={`heading-${blocks.length}`}>{renderInlineMarkdown(heading[1])}</h3>); return }
     const bullet = value.match(/^[-*]\s+(.+)$/)
     if (bullet) { bullets.push(bullet[1]); return }
