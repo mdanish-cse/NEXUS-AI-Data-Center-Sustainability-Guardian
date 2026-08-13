@@ -35,6 +35,7 @@ function formatTime(iso: string) {
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }) + ' WIB'
 }
+type ActivityEvent = { id: string; timestamp: string; title: string; type: string; tone: 'coral' | 'cyan' | 'violet' | 'teal' }
 
 /** Renders the small, predictable Markdown subset requested from the AI without injecting HTML. */
 function renderInlineMarkdown(text: string) {
@@ -234,7 +235,7 @@ function Anomaly({ finding, scenario, setScenario, onSimulate }: { finding: Find
   )
 }
 
-function AIInsight({ findings }: { findings: Finding[] }) {
+function AIInsight({ findings, onActivity }: { findings: Finding[]; onActivity: (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => void }) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ExplainResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -242,7 +243,9 @@ function AIInsight({ findings }: { findings: Finding[] }) {
   const analyze = async () => {
     setLoading(true); setError(null); setResult(null)
     try {
-      setResult(await postExplainFindings(findings))
+      const explanation = await postExplainFindings(findings)
+      setResult(explanation)
+      onActivity({ title: `AI explanation generated (${explanation.provider})`, type: 'Analysis', tone: 'violet' })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate explanation.')
     } finally {
@@ -275,7 +278,7 @@ function AIInsight({ findings }: { findings: Finding[] }) {
   )
 }
 
-function Simulator({ scenario, current }: { scenario: ScenarioId; current: Telemetry | null }) {
+function Simulator({ scenario, current, onActivity }: { scenario: ScenarioId; current: Telemetry | null; onActivity: (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => void }) {
   const baselineLoad = current?.itLoadPercent ?? 60
   const baselineAmbient = current?.ambientTemperatureC ?? 26
   const [setpoint, setSetpoint] = useState(22)
@@ -294,6 +297,7 @@ function Simulator({ scenario, current }: { scenario: ScenarioId; current: Telem
         ambientTemperatureDeltaC: ambient - baselineAmbient,
       }, scenario)
       setResult(next)
+      onActivity({ title: next.safety.status === 'safe' ? 'Simulation completed for review' : 'Simulation rejected by safety gate', type: next.safety.status === 'safe' ? 'Operator' : 'Safety', tone: next.safety.status === 'safe' ? 'teal' : 'coral' })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Simulation failed.')
     } finally {
@@ -361,18 +365,22 @@ function Simulator({ scenario, current }: { scenario: ScenarioId; current: Telem
   )
 }
 
-function EventFeed({ findings }: { findings: Finding[] }) {
+function EventFeed({ findings, activity }: { findings: Finding[]; activity: ActivityEvent[] }) {
   const items = findings.length > 0
     ? [...findings].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((f) => ({
         time: formatTime(f.timestamp), title: METRIC_HEADLINE[f.metric], type: f.severity.toUpperCase(),
         tone: f.severity === 'high' || f.severity === 'medium' ? 'coral' as const : 'cyan' as const,
       }))
     : [{ time: '—', title: 'No anomalies in current window', type: 'System', tone: 'teal' as const }]
+  const reportItems = [
+    ...activity.map((event) => ({ time: formatTime(event.timestamp), title: event.title, type: event.type, tone: event.tone })),
+    ...items,
+  ].slice(0, 6)
   return (
     <Panel className="events">
       <span id="reports" className="anchor-target" aria-hidden="true" />
       <div className="panel-heading"><div><p className="eyebrow">ACTIVITY</p><h2>Recent operational events</h2></div><button className="text-button">View all activity <ChevronDown size={14} /></button></div>
-      <div className="timeline">{items.map((item, i) => <div className="timeline-item" key={`${item.title}-${i}`}><span className={`timeline-dot ${item.tone}`} /><time>{item.time}</time><div><strong>{item.title}</strong><small>{item.type}</small></div></div>)}</div>
+      <div className="timeline">{reportItems.map((item, i) => <div className="timeline-item" key={`${item.title}-${i}`}><span className={`timeline-dot ${item.tone}`} /><time>{item.time}</time><div><strong>{item.title}</strong><small>{item.type}</small></div></div>)}</div>
     </Panel>
   )
 }
@@ -384,6 +392,22 @@ export default function Home() {
   const [scenario, setScenario] = useState<ScenarioId>('cooling-inefficiency')
   const [data, setData] = useState<FindingsResponse | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [activity, setActivity] = useState<ActivityEvent[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = window.sessionStorage.getItem('nexus-activity')
+      return saved ? JSON.parse(saved) as ActivityEvent[] : []
+    } catch { return [] }
+  })
+
+  const addActivity = (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
+    const next = { ...event, id: crypto.randomUUID(), timestamp: new Date().toISOString() }
+    setActivity((previous) => {
+      const updated = [next, ...previous].slice(0, 12)
+      window.sessionStorage.setItem('nexus-activity', JSON.stringify(updated))
+      return updated
+    })
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -459,7 +483,7 @@ export default function Home() {
               {(page === 'command-center' || page === 'telemetry') && <><div className="section-head"><div><p className="eyebrow">FACILITY SNAPSHOT</p><h2>Efficiency overview</h2></div><span className="data-note"><span className="dot cyan" />Synthetic demo telemetry</span></div><div className="metrics-grid">{metricCards.map(({ id, ...card }) => <MetricCard key={id} {...card} />)}</div><TelemetryCharts history={history} primaryFinding={primaryFinding} /></>}
               {(page === 'command-center' || page === 'anomalies') && <Anomaly finding={primaryFinding} scenario={scenario} setScenario={setScenario} onSimulate={scrollSim} />}
               {page === 'command-center' && <div className="insight-grid">
-                <AIInsight findings={findings} />
+                <AIInsight findings={findings} onActivity={addActivity} />
                 <Panel className="method-panel">
                   <div className="method-icon"><ShieldCheck size={18} /></div>
                   <p className="eyebrow">NEXUS METHOD</p>
@@ -468,10 +492,10 @@ export default function Home() {
                   <div className="method-steps">{['Monitor', 'Detect', 'Explain', 'Simulate', 'Optimize'].map((s, i) => <span key={s} className={i < 3 ? 'done' : ''}>{i < 3 ? <Check size={12} /> : i + 1} {s}</span>)}</div>
                 </Panel>
               </div>}
-              {page === 'anomalies' && <AIInsight findings={findings} />}
+              {page === 'anomalies' && <AIInsight findings={findings} onActivity={addActivity} />}
               {/* key={scenario} remounts (rather than effect-resets) the simulator's sliders/result when the scenario changes */}
-              {(page === 'command-center' || page === 'simulator') && <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} /></div>}
-              {(page === 'command-center' || page === 'reports') && <EventFeed findings={findings} />}
+              {(page === 'command-center' || page === 'simulator') && <div id="simulator"><Simulator key={scenario} scenario={scenario} current={current} onActivity={addActivity} /></div>}
+              {(page === 'command-center' || page === 'reports') && <EventFeed findings={findings} activity={activity} />}
               <footer>All telemetry shown is synthetic demo data for hackathon evaluation. Simulation outputs are estimates, not guarantees of real-world savings or operational performance.</footer>
             </>
           )}
