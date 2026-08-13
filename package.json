@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix web run dev",
-    "build": "npm --prefix web run build",
-    "start": "npm --prefix web run start",
-    "lint": "npm --prefix web run lint",
-    "test": "npm --prefix web run test"
+    "dev": "pnpm --dir web dev",
+    "build": "pnpm --dir web build",
+    "start": "pnpm --dir web start",
+    "lint": "pnpm --dir web lint",
+    "test": "pnpm --dir web test"
   }
 }
